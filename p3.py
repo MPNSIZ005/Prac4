@@ -17,9 +17,9 @@ last_rising_time = 0
 # DEFINE THE PINS USED HERE
 LED_value = [11, 13, 15]
 LED_accuracy = 32
-btn_submit = 38
-btn_increase = 40
-buzzer = 12
+btn_submit = 16
+btn_increase = 18
+buzzer = 33
 eeprom = ES2EEPROMUtils.ES2EEPROM()
 
 
@@ -59,6 +59,7 @@ def menu():
         print("Press and hold the guess button to cancel your game")
         global value
         value = generate_number()
+        print(value)
         accuracy_leds()
         while not end_of_game:
             trigger_buzzer()
@@ -91,23 +92,27 @@ def setup():
     # Setup board mode
     GPIO.setmode(GPIO.BOARD) # defined-pins line up to the pin numbers on the board
     # SETUP REGULAR GPIO
-        #LEDS
-    for i in LED_value:
-        GPIO.setup(i, GPIO.OUT)
-        GPIO.output(i,GPIO.LOW)
-        #BTNS
-    GPIO.setup(btn_submit, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    GPIO.setup(btn_increase, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    GPIO.add_event_detect(btn_increase,GPIO.FALLING,callback=btn_increase_pressed)
-    GPIO.add_event_detect(btn_submit,GPIO.RISING,callback=btn_guess_pressed)
+    GPIO.setup(11, GPIO.OUT)
+    GPIO.setup(13, GPIO.OUT)
+    GPIO.setup(15, GPIO.OUT)
+    GPIO.setup(33, GPIO.OUT)
+
+    GPIO.setup(LED_value, GPIO.OUT, initial = GPIO.LOW)
+    GPIO.setup(LED_accuracy, GPIO.OUT)
+    GPIO.setup(buzzer, GPIO.OUT, initial = GPIO.LOW)
+
+
+    GPIO.setup(btn_submit, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(btn_increase, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+    GPIO.add_event_detect(btn_increase,GPIO.FALLING,callback=btn_increase_pressed, bouncetime = 200)
+    GPIO.add_event_detect(btn_submit,GPIO.RISING,callback=btn_guess_pressed, bouncetime = 200)
     # SETUP PWM CHANNELS
         #RED LED
-    GPIO.setup(LED_accuracy, GPIO.OUT)
     global pwm_red_led
     pwm_red_led = GPIO.PWM(LED_accuracy, 1000)  #GPIO.PWM([pin], [frequency])
     pwm_red_led.start(0) # pwm.start([duty cycle])
         #buzzer
-    GPIO.setup(buzzer, GPIO.OUT)
     global pwm_buzzer
     pwm_buzzer = GPIO.PWM(buzzer, 500)
     pwm_buzzer.start(0)
@@ -224,7 +229,7 @@ def btn_guess_pressed(channel):
         print("checking guess..")
         time.sleep(2)
         # If they've pressed and held the button, clear up the GPIO and take them back to the menu screen
-        if(GPIO.input(btn_submit) == 1):
+        if (GPIO.input(btn_submit)==1):
             end_of_game = True
             attempts = 0
             GPIO.output(11, GPIO.LOW)
